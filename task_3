@@ -1,0 +1,551 @@
+#1
+
+
+import java.util.ArrayList;
+import java.util.Scanner;
+
+class Student {
+    private int id;
+    private String name;
+    private ArrayList<Integer> grades;
+    private double averageGrade;
+    
+    
+    public Student(int id, String name) {
+        this.id = id;
+        this.name = name;
+        this.grades = new ArrayList<>();
+        this.averageGrade = 0.0;
+    }
+
+    public int getId() { return id; }
+    public String getName() { return name; }
+    public ArrayList<Integer> getGrades() { return grades; }
+    public double getAverageGrade() { return averageGrade; }
+    
+
+    public void addGrades(ArrayList<Integer> newGrades) {
+        grades.addAll(newGrades);
+        calculateAverage();
+    }
+    
+    
+    public void calculateAverage() {
+        if (grades.isEmpty()) {
+            averageGrade = 0.0;
+            return;
+        }
+        
+        int sum = 0;
+        for (int grade : grades) {
+            sum += grade;
+        }
+        averageGrade = (double) sum / grades.size();
+    }
+    
+    public void displayInfo() {
+        System.out.printf("%s (ID: %d) - Average Grade: %.2f\n", name, id, averageGrade);
+        System.out.print("Grades: ");
+        for (int i = 0; i < grades.size(); i++) {
+            System.out.print(grades.get(i));
+            if (i < grades.size() - 1) System.out.print(", ");
+        }
+        System.out.println();
+    }
+    
+    @Override
+    public String toString() {
+        return String.format("%s (ID: %d) - Average Grade: %.2f", name, id, averageGrade);
+    }
+}
+
+
+class GradeBook {
+    private Student[] students;  // Array to hold Student objects
+    private int studentCount;
+    private static final int MAX_STUDENTS = 100;
+    
+    public GradeBook() {
+        students = new Student[MAX_STUDENTS];
+        studentCount = 0;
+    }
+    
+    public boolean addStudent(String name, int id, ArrayList<Integer> grades) {
+        if (studentCount >= MAX_STUDENTS) {
+            System.out.println("Grade book is full! Cannot add more students.");
+            return false;
+        }
+        
+        if (findStudentById(id) != null) {
+            System.out.println("Student with ID " + id + " already exists!");
+            return false;
+        }
+        
+        Student student = new Student(id, name);
+        student.addGrades(grades);
+        students[studentCount] = student;
+        studentCount++;
+        return true;
+    }
+
+    public void calculateAllAverages() {
+        for (int i = 0; i < studentCount; i++) {
+            students[i].calculateAverage();
+        }
+        System.out.println("Averages calculated for all students.");
+    }
+    
+
+    public double calculateClassAverage() {
+        if (studentCount == 0) {
+            System.out.println("No students in the grade book.");
+            return 0.0;
+        }
+        
+        double totalAverage = 0.0;
+        for (int i = 0; i < studentCount; i++) {
+            totalAverage += students[i].getAverageGrade();
+        }
+        double classAverage = totalAverage / studentCount;
+        System.out.printf("Class Average: %.2f\n", classAverage);
+        return classAverage;
+    }
+    
+
+    public void displaySortedStudents() {
+        if (studentCount == 0) {
+            System.out.println("No students in the grade book.");
+            return;
+        }
+        
+    
+        Student[] sortedStudents = new Student[studentCount];
+        for (int i = 0; i < studentCount; i++) {
+            sortedStudents[i] = students[i];
+        }
+        
+    
+        for (int i = 0; i < sortedStudents.length - 1; i++) {
+            for (int j = 0; j < sortedStudents.length - i - 1; j++) {
+                if (sortedStudents[j].getAverageGrade() < sortedStudents[j + 1].getAverageGrade()) {
+                    Student temp = sortedStudents[j];
+                    sortedStudents[j] = sortedStudents[j + 1];
+                    sortedStudents[j + 1] = temp;
+                }
+            }
+        }
+        
+        System.out.println("\nStudent List (sorted by average):");
+        for (int i = 0; i < sortedStudents.length; i++) {
+            System.out.println((i + 1) + ". " + sortedStudents[i]);
+        }
+    }
+    
+
+    public Student findStudentById(int id) {
+        for (int i = 0; i < studentCount; i++) {
+            if (students[i].getId() == id) {
+                return students[i];
+            }
+        }
+        return null;
+    }
+    
+    public void displayStudentById(int id) {
+        Student student = findStudentById(id);
+        if (student != null) {
+            System.out.println("\n--- Student Found ---");
+            student.displayInfo();
+        } else {
+            System.out.println("Student with ID " + id + " not found.");
+        }
+    }
+    
+    public boolean removeStudentById(int id) {
+        int indexToRemove = -1;
+        
+        for (int i = 0; i < studentCount; i++) {
+            if (students[i].getId() == id) {
+                indexToRemove = i;
+                break;
+            }
+        }
+        
+        if (indexToRemove == -1) {
+            return false;
+        }
+    
+        for (int i = indexToRemove; i < studentCount - 1; i++) {
+            students[i] = students[i + 1];
+        }
+        
+        students[studentCount - 1] = null;
+        studentCount--;
+        return true;
+    }
+    
+    public int getStudentCount() {
+        return studentCount;
+    }
+}
+
+
+public class Main {
+    private static GradeBook gradeBook = new GradeBook();
+    private static Scanner scanner = new Scanner(System.in);
+    
+    public static void main(String[] args) {
+        System.out.println("=== Student Grade Tracker ===\n");
+        
+        while (true) {
+            displayMenu();
+            int choice = getIntInput("Enter your choice: ");
+            
+            switch (choice) {
+                case 1:
+                    addStudent();
+                    break;
+                case 2:
+                    calculateStudentAverage();
+                    break;
+                case 3:
+                    gradeBook.calculateClassAverage();
+                    break;
+                case 4:
+                    gradeBook.displaySortedStudents();
+                    break;
+                case 5:
+                    searchStudent();
+                    break;
+                case 6:
+                    removeStudent();
+                    break;
+                case 7:
+                    System.out.println("\nThank you for using Student Grade Tracker. Goodbye!");
+                    scanner.close();
+                    return;
+                default:
+                    System.out.println("Invalid choice. Please enter a number between 1 and 7.");
+            }
+        }
+    }
+    
+    private static void displayMenu() {
+        System.out.println("\n=== Menu ===");
+        System.out.println("1. Add Student");
+        System.out.println("2. Calculate Average for a Student");
+        System.out.println("3. Calculate Class Average");
+        System.out.println("4. Display Student List (sorted by average)");
+        System.out.println("5. Search for Student");
+        System.out.println("6. Remove Student");
+        System.out.println("7. Quit");
+    }
+    
+    private static void addStudent() {
+        System.out.println("\n--- Add New Student ---");
+        
+        System.out.print("Enter student name: ");
+        String name = scanner.nextLine();
+        
+        int id = getIntInput("Enter student ID: ");
+        
+        if (gradeBook.findStudentById(id) != null) {
+            System.out.println("Student with ID " + id + " already exists!");
+            return;
+        }
+        
+        System.out.print("Enter student grades (comma-separated): ");
+        String gradesInput = scanner.nextLine();
+        String[] gradeStrings = gradesInput.split(",");
+        
+        ArrayList<Integer> grades = new ArrayList<>();
+        for (String gradeStr : gradeStrings) {
+            try {
+                int grade = Integer.parseInt(gradeStr.trim());
+                if (grade >= 0 && grade <= 100) {
+                    grades.add(grade);
+                } else {
+                    System.out.println("Grade " + grade + " is invalid (0-100). Skipping.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid grade format: " + gradeStr + ". Skipping.");
+            }
+        }
+        
+        if (grades.isEmpty()) {
+            System.out.println("No valid grades provided. Student not added.");
+            return;
+        }
+        
+        if (gradeBook.addStudent(name, id, grades)) {
+            System.out.println("Student added successfully!");
+        }
+    }
+    
+    private static void calculateStudentAverage() {
+        System.out.println("\n--- Calculate Student Average ---");
+        int id = getIntInput("Enter student ID: ");
+        Student student = gradeBook.findStudentById(id);
+        
+        if (student != null) {
+            student.calculateAverage();
+            System.out.printf("Student: %s (ID: %d)\n", student.getName(), student.getId());
+            System.out.println("Grades: " + student.getGrades());
+            System.out.printf("Average Grade: %.2f\n", student.getAverageGrade());
+        } else {
+            System.out.println("Student with ID " + id + " not found.");
+        }
+    }
+    
+    private static void searchStudent() {
+        System.out.println("\n--- Search Student ---");
+        int id = getIntInput("Enter student ID to search: ");
+        gradeBook.displayStudentById(id);
+    }
+    
+    private static void removeStudent() {
+        System.out.println("\n--- Remove Student ---");
+        int id = getIntInput("Enter student ID to remove: ");
+        
+        if (gradeBook.removeStudentById(id)) {
+            System.out.println("Student removed successfully!");
+        } else {
+            System.out.println("Student with ID " + id + " not found.");
+        }
+    }
+    
+    private static int getIntInput(String prompt) {
+        System.out.print(prompt);
+        while (!scanner.hasNextInt()) {  
+            System.out.print("Invalid input. Please enter a number: ");
+            scanner.next();
+        }
+        int input = scanner.nextInt();
+        scanner.nextLine(); 
+        return input;
+    }
+}
+
+
+
+
+
+#2
+
+import java.util.ArrayList;
+import java.util.Scanner;
+
+class EmailList {
+    private ArrayList<String> emails;
+
+    public EmailList() {
+        emails = new ArrayList<>();
+    }
+
+    public void addEmail(String email) {
+        emails.add(email);
+        System.out.println("Email added successfully!");
+    }
+
+    public void removeEmail(String email) {
+        if (emails.remove(email)) {
+            System.out.println("Email removed successfully!");
+        } else {
+            System.out.println("Email not found!");
+        }
+    }
+
+    public void listEmails() {
+        if (emails.isEmpty()) {
+            System.out.println("Email list is empty.");
+        } else {
+            System.out.println("Email List:");
+            for (int i = 0; i < emails.size(); i++) {
+                System.out.println((i + 1) + ". " + emails.get(i));
+            }
+        }
+    }
+
+    public void checkEmail(String email) {
+        if (emails.contains(email)) {
+            System.out.println(email + " is in the list.");
+        } else {
+            System.out.println(email + " is not in the list.");
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        EmailList emailList = new EmailList();
+
+        int choice;
+
+        do {
+            System.out.println("\n1. Add Email");
+            System.out.println("2. Remove Email");
+            System.out.println("3. List Emails");
+            System.out.println("4. Check Email");
+            System.out.println("5. Quit");
+
+            System.out.print("\nEnter your choice: ");
+            choice = sc.nextInt();
+            sc.nextLine(); // Consume newline
+
+            switch (choice) {
+                case 1:
+                    System.out.print("Enter email address to add: ");
+                    String addEmail = sc.nextLine();
+                    emailList.addEmail(addEmail);
+                    break;
+
+                case 2:
+                    System.out.print("Enter email address to remove: ");
+                    String removeEmail = sc.nextLine();
+                    emailList.removeEmail(removeEmail);
+                    break;
+
+                case 3:
+                    emailList.listEmails();
+                    break;
+
+                case 4:
+                    System.out.print("Enter email address to check: ");
+                    String checkEmail = sc.nextLine();
+                    emailList.checkEmail(checkEmail);
+                    break;
+
+                case 5:
+                    System.out.println("Exiting program...");
+                    break;
+
+                default:
+                    System.out.println("Invalid choice! Please try again.");
+            }
+
+        } while (choice != 5);
+
+        sc.close();
+    }
+}
+
+
+
+
+
+
+#3
+
+import java.util.*;
+
+class Book {
+    String title, author, isbn;
+    int year;
+
+    Book(String t, String a, String i, int y) {
+        title = t;
+        author = a;
+        isbn = i;
+        year = y;
+    }
+
+    public String toString() {
+        return "\"" + title + "\" by " + author;
+    }
+}
+
+class LibraryCatalog {
+    ArrayList<Book> books = new ArrayList<>();
+
+    void addBook(Book b) {
+        books.add(b);
+        System.out.println("Book added successfully!");
+    }
+ 
+    void removeBook(String title) {
+        books.removeIf(b -> b.title.equalsIgnoreCase(title));
+        System.out.println("Book removed successfully!");
+    }
+
+    void listBooks() {
+        System.out.println("Book List:");
+        for (int i = 0; i < books.size(); i++)
+            System.out.println((i + 1) + ". " + books.get(i));
+    }
+
+    void searchByTitle(String title) {
+        System.out.println("Found books:");
+        for (Book b : books)
+            if (b.title.equalsIgnoreCase(title))
+                System.out.println(b);
+    }
+
+    void searchByAuthor(String author) {
+        System.out.println("Found books:");
+        for (Book b : books)
+            if (b.author.equalsIgnoreCase(author))
+                System.out.println(b);
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        LibraryCatalog lib = new LibraryCatalog();
+        int ch;
+
+        do {
+            System.out.println("\n1.Add Book\n2.Remove Book\n3.List Books");
+            System.out.println("4.Search by Title\n5.Search by Author\n6.Quit");
+            System.out.print("Enter choice: ");
+            ch = sc.nextInt();
+            sc.nextLine();
+
+            switch (ch) {
+                case 1:
+                    System.out.print("Enter title: ");
+                    String t = sc.nextLine();
+
+                    System.out.print("Enter author: ");
+                    String a = sc.nextLine();
+
+                    System.out.print("Enter ISBN: ");
+                    String i = sc.nextLine();
+
+                    System.out.print("Enter year: ");
+                    int y = sc.nextInt();
+                    sc.nextLine();
+
+                    lib.addBook(new Book(t, a, i, y));
+                    break;
+
+                case 2:
+                    System.out.print("Enter title to remove: ");
+                    lib.removeBook(sc.nextLine());
+                    break;
+
+                case 3:
+                    lib.listBooks();
+                    break;
+
+                case 4:
+                    System.out.print("Enter title to search: ");
+                    lib.searchByTitle(sc.nextLine());
+                    break;
+
+                case 5:
+                    System.out.print("Enter author to search: ");
+                    lib.searchByAuthor(sc.nextLine());
+                    break;
+
+                case 6:
+                    System.out.println("Program Ended");
+            }
+        } while (ch != 6);
+
+        sc.close();
+    }
+}
+
+
